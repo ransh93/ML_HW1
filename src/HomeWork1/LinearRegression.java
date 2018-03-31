@@ -29,6 +29,7 @@ public class LinearRegression implements Classifier {
 		m_truNumAttributes = trainingData.numAttributes() - 1;
 		m_coefficients = new double[m_truNumAttributes + 1];
 		
+		// Reset coefficients array
 		setInitialCoefficients(1);
 
 		// If the given alpha is 0, we need to find an alpha
@@ -38,6 +39,10 @@ public class LinearRegression implements Classifier {
 			System.out.println("The chosen alpha is: " + m_alpha);
 		}
 		
+		// Reset coefficients array
+		setInitialCoefficients(1);
+		
+		// Run gradient descent progress
 		gradientDescentProgress(trainingData);
 		
 		
@@ -63,11 +68,6 @@ public class LinearRegression implements Classifier {
 			{
 				 prevMse = mse;
 				 mse = calculateMSE(trainingData);
-				 
-				 if(prevMse - mse < 0)
-				 {
-					 System.out.println("HERE");
-				 }
 			}
 			
 		}
@@ -153,7 +153,6 @@ public class LinearRegression implements Classifier {
 		double partialDerivative = 0;
 		double gradientDescentValue = 0;
 		double [] m_coefficients_tmp = new double[m_coefficients.length];
-		
 		
 		for (int i = 0; i < m_coefficients_tmp.length; i++) 
 		{
