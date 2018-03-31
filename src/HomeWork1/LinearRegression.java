@@ -1,7 +1,5 @@
 package HomeWork1;
 
-import java.util.Random;
-
 import weka.classifiers.Classifier;
 import weka.core.Capabilities;
 import weka.core.Instance;
@@ -14,7 +12,14 @@ public class LinearRegression implements Classifier {
     private int m_ClassIndex;
 	private int m_truNumAttributes;
 	private double[] m_coefficients;
-	private double m_alpha;
+	private double m_alpha = 0;
+	
+	// I think i dont need this
+	public LinearRegression(double alpha) 
+	{
+		// Set a given alpha if given
+		this.m_alpha = alpha;
+	}
 	
 	//the method which runs to train the linear regression predictor, i.e.
 	//finds its weights.
@@ -22,19 +27,30 @@ public class LinearRegression implements Classifier {
 	public void buildClassifier(Instances trainingData) throws Exception {
 		m_ClassIndex = trainingData.classIndex();
 		m_truNumAttributes = trainingData.numAttributes() - 1;
-		m_coefficients = new double[m_truNumAttributes];
+		m_coefficients = new double[m_truNumAttributes + 1];
 		
-		Random random = new Random();
-		for (int i = 0; i < m_coefficients.length; i++) {
-			m_coefficients[i] = random.nextDouble();
+		setInitialCoefficients(1);
+
+		// If the given alpha is 0, we need to find an alpha
+		if(m_alpha == 0)
+		{
+			findAlpha(trainingData);
+			System.out.println("The chosen alpha is: " + m_alpha);
 		}
 		
+		gradientDescentProgress(trainingData);
 		
-		findAlpha(trainingData);
-		System.out.println("This is the best alpha " + m_alpha);
 		
+		// I think this can be removed
+		//m_coefficients = gradientDescent(trainingData);
+		
+	}
+	
+	
+	private void gradientDescentProgress(Instances trainingData) throws Exception
+	{
 		double mse = calculateMSE(trainingData);
-		double prevMse = mse + 1;
+		double prevMse = mse + 1; // Niv will fix this
 		int counter = 1;
 		
 		while(prevMse - mse > errorDif)
@@ -47,7 +63,6 @@ public class LinearRegression implements Classifier {
 			{
 				 prevMse = mse;
 				 mse = calculateMSE(trainingData);
-				 System.out.println("mse: "+mse+"\t dif: "+(prevMse-mse));
 				 
 				 if(prevMse - mse < 0)
 				 {
@@ -56,18 +71,22 @@ public class LinearRegression implements Classifier {
 			}
 			
 		}
-		
-		
-		//TODO: complete this method
-		//m_coefficients = gradientDescent(trainingData);
-		
+	}
+	
+	private void setInitialCoefficients(double val)
+	{
+		for (int i = 0; i < m_coefficients.length; i++) 
+		{
+			m_coefficients[i] = val;
+		}	
 	}
 	
 	private void findAlpha(Instances data) throws Exception {
-		double curMSEForAlpha = Double.MAX_VALUE; // change name
-		double curAlpha = 0; // change to maxAlpha
+		double minErrorValue = Double.MAX_VALUE;
+		double alphaValForMinError = 0;
 		double[] copy_m_coefficients = new double[m_coefficients.length];
 		
+		// why did we done this?
 		for (int i = 0; i < copy_m_coefficients.length; i++) 
 		{
 			copy_m_coefficients[i] = m_coefficients[i];
@@ -76,76 +95,39 @@ public class LinearRegression implements Classifier {
 		// not reaching to 0
 		for (int i = -17; i < 0; i++) 
 		{
-			
-			//curAlpha = Math.pow(3, i);
-			this.m_alpha = Math.pow(3, i);; // check this two lines
+			int stepCounter;
 			double prevError = Double.MAX_VALUE;
 			double curError = prevError;
-			int j;
 			
-			for (j = 0; j < NUM_OF_STEPS; j++) 
+			m_alpha = Math.pow(3, i);
+			
+			for (stepCounter = 0; stepCounter < NUM_OF_STEPS; stepCounter++) 
 			{
 				m_coefficients = gradientDescent(data);
 				
-				if(j % 100 == 0)
+				if(stepCounter % 100 == 0)
 				{
 					curError = calculateMSE(data);
-					System.out.println("Alpha is: " + m_alpha + " and the error is: " + curError);
-					if(curError > prevError)
-					{
-						/*
-						if(prevError < curMSEForAlpha)
-						{
-							curMSEForAlpha = prevError;
-							this.m_alpha = curAlpha;
-						}
-						*/
-						
-						break;
-					}
 					
+					if(curError > prevError)	
+						break;
+										
 					prevError = curError;
 				}
 			}
-			/*
-			System.err.println("The prev is: " + prevError + " the best is: " + curMSEForAlpha);
-			if(j == NUM_OF_STEPS)
-			{
-				if (curError < curMSEForAlpha)
-				{
-					curMSEForAlpha = curError;
-					this.m_alpha = curAlpha;
-				}
-			}else
-			{
-				if (prevError < curMSEForAlpha)
-				{
-					curMSEForAlpha = prevError;
-					this.m_alpha = curAlpha;
-				}
-			}
-			*/
-			//System.err.println("after update:  The prev is: " + prevError + " the best is: " + curMSEForAlpha);
 			
-			if(prevError < curMSEForAlpha)
+			if(prevError < minErrorValue)
 			{
-
-				System.err.println("The prev is: " + prevError + " the best is: " + curMSEForAlpha);
-				if(j == NUM_OF_STEPS)
+				if(stepCounter == NUM_OF_STEPS)
 				{
-					curMSEForAlpha = curError;
-					//this.m_alpha = curAlpha;
-					curAlpha = this.m_alpha;
+					minErrorValue = curError;
+					alphaValForMinError = m_alpha;
 				}
 				else
 				{
-					curMSEForAlpha = prevError;
-					curAlpha = this.m_alpha;
-					//this.m_alpha = curAlpha;
+					minErrorValue = prevError;
+					alphaValForMinError = m_alpha;
 				}
-				
-				System.err.println("The change " + curMSEForAlpha);
-				
 			}
 			
 			for (int k = 0; k < copy_m_coefficients.length; k++) 
@@ -153,7 +135,7 @@ public class LinearRegression implements Classifier {
 				m_coefficients[k] = copy_m_coefficients[k];
 			}
 			
-			this.m_alpha = curAlpha;
+			m_alpha = alphaValForMinError;
 		}
 	}
 	
@@ -168,91 +150,48 @@ public class LinearRegression implements Classifier {
 	private double[] gradientDescent(Instances trainingData)
 			throws Exception {
 	
+		double partialDerivative = 0;
+		double gradientDescentValue = 0;
 		double [] m_coefficients_tmp = new double[m_coefficients.length];
-		double [] m_coefficients_result = new double[m_coefficients.length];
 		
-		for (int i = 0; i < m_coefficients.length; i++) 
+		
+		for (int i = 0; i < m_coefficients_tmp.length; i++) 
 		{
-			m_coefficients_tmp[i] = m_coefficients[i];
-			m_coefficients_result[i] = m_coefficients[i];
-		}
-		
-		//double mse = calculateMSE(trainingData);
-		//double prevMse = mse+1;
-		//int counter = 1;
-		
-		//while(prevMse - mse > errorDif)
-		//{
-		//	counter++;
+			partialDerivative = calculatePartialDerivative(trainingData, i);
+			gradientDescentValue = m_alpha * partialDerivative;
 			
-			double sumOfErr = 0;
-			double instancePredict;
-			double instanceY;
-			
-			for (int i = 0; i < trainingData.size(); i++)
-			{
-				instancePredict = regressionPrediction(trainingData.instance(i));
-				instanceY = trainingData.instance(i).classValue();
-				
-				sumOfErr += instancePredict - instanceY;
-			}
-			
-			sumOfErr = sumOfErr / (trainingData.size()) * m_alpha;
-			
-			m_coefficients_tmp[0] -= sumOfErr; // Can change to mse?
-			
-			// Change the loop to go over num of features
-			for (int i = 1; i < m_coefficients_tmp.length; i++) 
-			{
-				sumOfErr = 0;
-				instancePredict = 0;
-				instanceY = 0;
-				
-				// maybe from 1
-				for (int j = 0; j < trainingData.size(); j++)
-				{
-					instancePredict = m_coefficients[0]; // Can be tricky
-					
-					// Maybe go -1 on the m_coefficients
-					for (int k = 1; k < m_coefficients.length; k++) 
-					{
-						instancePredict += m_coefficients[k] * trainingData.instance(j).value(k);
-					}
-					
-					instanceY = trainingData.instance(j).classValue();
+			m_coefficients_tmp[i] = m_coefficients[i] - gradientDescentValue; 
 
-					sumOfErr += (instancePredict - instanceY) * trainingData.instance(j).value(i);
-				}
-				
-				sumOfErr = sumOfErr / (double)trainingData.size() * m_alpha;
-				
-				m_coefficients_tmp[i] -= sumOfErr; 
-			}
-			
-			for (int i = 0; i < m_coefficients_tmp.length; i++) 
-			{
-				m_coefficients[i] = m_coefficients_tmp[i];
-			}
-			
-			/*
-			if(counter % 100 == 0)
-			{
-				 prevMse = mse;
-				 mse = calculateMSE(trainingData);
-				 System.out.println("mse: "+mse+"\t dif: "+(prevMse-mse));
-				 
-				 if(prevMse-mse < 0)
-				 {
-					 System.out.println("HERE");
-				 }
-			}
-			*/
-				
-		//}
+		}
+
+		m_coefficients = m_coefficients_tmp;
 		
 		return m_coefficients;
 
 	}
+	
+	private double calculatePartialDerivative(Instances trainingData, int attributeIndex) throws Exception {
+		double sumOfSinglePartialDerv = 0;
+		double instancePredict = 0;
+		double instanceY = 0;
+		double singlePartialDerivative = 0;
+		
+		for (int i = 0; i < trainingData.size(); i++)
+		{
+			instancePredict = regressionPrediction(trainingData.instance(i));
+			instanceY = trainingData.instance(i).value(m_ClassIndex);
+			
+			singlePartialDerivative = instancePredict - instanceY;
+			
+			if(attributeIndex != 0)
+				singlePartialDerivative *= trainingData.instance(i).value(attributeIndex - 1);
+			
+			sumOfSinglePartialDerv += singlePartialDerivative;
+		}
+		
+		return sumOfSinglePartialDerv / trainingData.size();
+	}
+	
 	
 	/**
 	 * Returns the prediction of a linear regression predictor with weights
@@ -263,12 +202,10 @@ public class LinearRegression implements Classifier {
 	 * @throws Exception
 	 */
 	public double regressionPrediction(Instance instance) throws Exception {
-		double prediction = m_coefficients[0]; // Can be tricky
+		double prediction = m_coefficients[0];
 		
-		// Maybe go -1 on the m_coefficients
 		for (int i = 0; i < m_coefficients.length - 1; i++) 
 		{
-			//System.out.println(instance.value(i));
 			prediction += m_coefficients[i+1] * instance.value(i);
 		}
 		
@@ -286,13 +223,13 @@ public class LinearRegression implements Classifier {
 	public double calculateMSE(Instances data) throws Exception {
 
 		double sumOfErr = 0;
-		double instancePredict;
-		double instanceY;
+		double instancePredict = 0;
+		double instanceY = 0;
 		
 		for (int i = 0; i < data.size(); i++)
 		{
 			instancePredict = regressionPrediction(data.instance(i));
-			instanceY = data.instance(i).classValue();
+			instanceY = data.instance(i).value(m_ClassIndex);
 			
 			sumOfErr += Math.pow(instancePredict - instanceY, 2);
 		}
