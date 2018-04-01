@@ -4,19 +4,9 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Random;
-import java.util.concurrent.ThreadLocalRandom;
-
-import weka.attributeSelection.BestFirst;
-import weka.core.Attribute;
-import weka.core.FastVector;
-import weka.core.Instance;
 import weka.core.Instances;
 import weka.filters.Filter;
 import weka.filters.unsupervised.attribute.Remove;
-import weka.filters.supervised.attribute.AttributeSelection;
 
 public class MainHW1 {
 	
@@ -73,11 +63,12 @@ public class MainHW1 {
 		minAttrArr[3] = 14;
 		 
 		Remove remove = new Remove(); // New instance of remove
-		remove.setInvertSelection(true);// Keep the given indexes and don't remove them
+		remove.setInvertSelection(true); // Keep the given indexes and don't remove them
 		Instances filteredInstances = new Instances(trainingSet);
 
 		int i, j, k;
 		
+		// Find add 3 features combinations
 		for (i = 0; i < attrsize-2; i++)
 		{
 			attrArr[0] = i; // Set first attribute

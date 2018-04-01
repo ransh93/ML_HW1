@@ -8,7 +8,8 @@ import weka.core.Instances;
 public class LinearRegression implements Classifier {
 	
 	final int NUM_OF_STEPS = 20000;
-	final double errorDif = 0.003;
+	final double ERROR_DIFF = 0.003;
+	final int CHECK_POINT = 100;
     private int m_ClassIndex;
 	private int m_truNumAttributes;
 	private double[] m_coefficients;
@@ -44,18 +45,19 @@ public class LinearRegression implements Classifier {
 	private void gradientDescentProgress(Instances trainingData) throws Exception
 	{
 		double mse = calculateMSE(trainingData);
+		
 		//ensure that the while loop will be executed at the first call - and than prevMse will update correctly
-		double prevMse = mse + errorDif + 1; 
+		double prevMse = mse + ERROR_DIFF + 1; 
 		int counter = 1;
 		
 		// run until the change in the error from the last iteration of gradientDescent is smaller then errorDif
-		while(prevMse - mse > errorDif)
+		while(prevMse - mse > ERROR_DIFF)
 		{
 			counter++;
 			
 			m_coefficients = gradientDescent(trainingData);
 			
-			if(counter % 100 == 0)
+			if(counter % CHECK_POINT == 0)
 			{
 				 prevMse = mse;
 				 mse = calculateMSE(trainingData);
@@ -64,7 +66,7 @@ public class LinearRegression implements Classifier {
 		}
 	}
 	
-	//setter for the coefficients by one same value for all of them
+	//set the coefficients by one same value for all of them
 	private void setInitialCoefficients(double val)
 	{
 		for (int i = 0; i < m_coefficients.length; i++) 
@@ -98,9 +100,10 @@ public class LinearRegression implements Classifier {
 			{
 				m_coefficients = gradientDescent(data);
 				
-				if(stepCounter % 100 == 0)
+				if(stepCounter % CHECK_POINT == 0)
 				{
 					curError = calculateMSE(data);
+					
 					// check if the error start to grow when doing gradientDescent
 					if(curError > prevError)	
 						break;
@@ -108,6 +111,7 @@ public class LinearRegression implements Classifier {
 					prevError = curError;
 				}
 			}
+			
 			// update alphaValForMinError and minErrorValue if we found better alpha than we saw until now
 			if(prevError < minErrorValue)
 			{
@@ -120,6 +124,7 @@ public class LinearRegression implements Classifier {
 				
 				alphaValForMinError = m_alpha;
 			}
+			
 			// update back m_coefficients to the starting point of each alpha
 			for (int k = 0; k < copy_m_coefficients.length; k++) 
 			{
@@ -150,10 +155,12 @@ public class LinearRegression implements Classifier {
 			partialDerivative = calculatePartialDerivative(trainingData, i);
 			gradientDescentValue = m_alpha * partialDerivative;
 			
+			// Update teta vector for the right attribute
 			m_coefficients_tmp[i] = m_coefficients[i] - gradientDescentValue; 
 
 		}
 
+		// update the all coefficients in the end of one gradient descent 
 		m_coefficients = m_coefficients_tmp;
 		
 		return m_coefficients;
@@ -179,6 +186,7 @@ public class LinearRegression implements Classifier {
 			
 			singlePartialDerivative = instancePredict - instanceY;
 			
+			// The partial derivative of the first attribute is 1
 			if(attributeIndex != 0)
 				singlePartialDerivative *= trainingData.instance(i).value(attributeIndex - 1);
 			
