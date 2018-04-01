@@ -47,13 +47,13 @@ public class MainHW1 {
 	}
 	
 	public static void main(String[] args) throws Exception {
-		
+
 		// Load training and testing data
-		Instances trainingSet = loadData("C:\\Users\\Ransh\\Desktop\\Study\\ML\\HW1\\HW1\\wind_training.txt");
-		Instances testingSet = loadData("C:\\Users\\Ransh\\Desktop\\Study\\ML\\HW1\\HW1\\wind_testing.txt");
+		Instances trainingSet = loadData("wind_training.txt");
+		Instances testingSet = loadData("wind_testing.txt");
 		
 		//find best alpha and build classifier with all attributes
-		LinearRegression linearRegression = new LinearRegression(0);
+		LinearRegression linearRegression = new LinearRegression();
 		linearRegression.buildClassifier(trainingSet); // train it
 		
 		double trainingMSE = linearRegression.calculateMSE(trainingSet); // For getting the training error
@@ -91,7 +91,6 @@ public class MainHW1 {
 					remove.setInputFormat(trainingSet);
 					filteredInstances = Filter.useFilter(trainingSet, remove); // Apply filter
 					
-					//LinearRegression filteredLinearRegression = new LinearRegression(0);
 					linearRegression.buildClassifier(filteredInstances); // Train by the filtered instances
 					double filteredTrainingMSE = linearRegression.calculateMSE(filteredInstances); // For getting the 3 attributes training error
 					
@@ -117,7 +116,6 @@ public class MainHW1 {
 		remove.setInputFormat(testingSet);                     
 		filteredInstances = Filter.useFilter(testingSet, remove); // Apply filter
 		
-		//LinearRegression filteredLinearRegression = new LinearRegression(0);
 		linearRegression.buildClassifier(filteredInstances); // train it by the min filtered instances
 		double testingFilteredMSE = linearRegression.calculateMSE(filteredInstances); // For getting the 3 attributes testing error
 		

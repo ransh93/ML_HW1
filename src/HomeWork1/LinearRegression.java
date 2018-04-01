@@ -14,13 +14,6 @@ public class LinearRegression implements Classifier {
 	private double[] m_coefficients;
 	private double m_alpha = 0;
 	
-	// I think i dont need this
-	public LinearRegression(double alpha) 
-	{
-		// Set a given alpha if given
-		this.m_alpha = alpha;
-	}
-	
 	//the method which runs to train the linear regression predictor, i.e.
 	//finds its weights.
 	@Override
@@ -39,15 +32,11 @@ public class LinearRegression implements Classifier {
 			System.out.println("The chosen alpha is: " + m_alpha);
 		}
 		
-		// Reset coefficients array
+		// Reset coefficients array - can be changed to another point and the process will work correctly
 		setInitialCoefficients(1);
 		
 		// Run gradient descent progress
 		gradientDescentProgress(trainingData);
-		
-		
-		// I think this can be removed
-		//m_coefficients = gradientDescent(trainingData);
 		
 	}
 	
@@ -55,9 +44,11 @@ public class LinearRegression implements Classifier {
 	private void gradientDescentProgress(Instances trainingData) throws Exception
 	{
 		double mse = calculateMSE(trainingData);
-		double prevMse = mse + 1; // Niv will fix this
+		//ensure that the while loop will be executed at the first call - and than prevMse will update correctly
+		double prevMse = mse + errorDif + 1; 
 		int counter = 1;
 		
+		// run until the change in the error from the last iteration of gradientDescent is smaller then errorDif
 		while(prevMse - mse > errorDif)
 		{
 			counter++;
@@ -73,6 +64,7 @@ public class LinearRegression implements Classifier {
 		}
 	}
 	
+	//setter for the coefficients by one same value for all of them
 	private void setInitialCoefficients(double val)
 	{
 		for (int i = 0; i < m_coefficients.length; i++) 
@@ -86,13 +78,14 @@ public class LinearRegression implements Classifier {
 		double alphaValForMinError = 0;
 		double[] copy_m_coefficients = new double[m_coefficients.length];
 		
-		// why did we done this?
+		// copy the coefficients that each alpha should start with because the global array - m_coefficients
+		// will be changed during the process over every chosen alpha 
 		for (int i = 0; i < copy_m_coefficients.length; i++) 
 		{
 			copy_m_coefficients[i] = m_coefficients[i];
 		}
 		
-		// not reaching to 0
+		// loop over the all optional alpha values that we want to check
 		for (int i = -17; i < 0; i++) 
 		{
 			int stepCounter;
@@ -108,28 +101,26 @@ public class LinearRegression implements Classifier {
 				if(stepCounter % 100 == 0)
 				{
 					curError = calculateMSE(data);
-					
+					// check if the error start to grow when doing gradientDescent
 					if(curError > prevError)	
 						break;
 										
 					prevError = curError;
 				}
 			}
-			
+			// update alphaValForMinError and minErrorValue if we found better alpha than we saw until now
 			if(prevError < minErrorValue)
 			{
+				// if we did NUM_OF_STEPS times gradientDecsent the curError is the minimal error value that we found
+				// and if we did less than that - than curError > prevError so prevError is the minimal error value that we found
 				if(stepCounter == NUM_OF_STEPS)
-				{
 					minErrorValue = curError;
-					alphaValForMinError = m_alpha;
-				}
 				else
-				{
 					minErrorValue = prevError;
-					alphaValForMinError = m_alpha;
-				}
+				
+				alphaValForMinError = m_alpha;
 			}
-			
+			// update back m_coefficients to the starting point of each alpha
 			for (int k = 0; k < copy_m_coefficients.length; k++) 
 			{
 				m_coefficients[k] = copy_m_coefficients[k];
@@ -168,7 +159,13 @@ public class LinearRegression implements Classifier {
 		return m_coefficients;
 
 	}
-	
+	/**
+	 * Gets training data and atribute index and calculate the directional derivative value when the direction is
+	 * the given attribute 
+     *
+	 * @return directional derivative value
+	 * @throws Exception
+	 */
 	private double calculatePartialDerivative(Instances trainingData, int attributeIndex) throws Exception {
 		double sumOfSinglePartialDerv = 0;
 		double instancePredict = 0;
